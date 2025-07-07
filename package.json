@@ -1,0 +1,28 @@
+{
+  "name": "protobufserver",
+  "version": "1.0.0",
+  "description": "Node.js+TS+gRPC",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samettok0/ProtobufServer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "proto-gen": "./proto-gen.sh",
+    "start": "ts-node server.ts",
+    "client": "ts-node client.ts"
+  },
+  "bugs": {
+    "url": "https://github.com/samettok0/ProtobufServer/issues"
+  },
+  "homepage": "https://github.com/samettok0/ProtobufServer#readme",
+  "devDependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "@grpc/proto-loader": "^0.7.15",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
