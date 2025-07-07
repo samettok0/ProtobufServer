@@ -28,8 +28,9 @@ function main () {
 function getServer () {
     const server = new grpc.Server();
     server.addService(randomPackage.Random.service, {
-        "PingPong": (req, res) => {
-            console.log(req, res);
+        PingPong: (req, res) => {
+            console.log(req.request); // Log the request
+            res(null, { message: "PONG!" }); // Respond with a Pong message
         }
     } as RandomHandlers); // Use the generated handlers)
 
