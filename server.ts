@@ -4,6 +4,9 @@ import * as protoLoader from '@grpc/proto-loader';
 import {ProtoGrpcType} from './proto/random'
 import {RandomHandlers} from './proto/randomPackage/Random'; // Import the generated types
 import { TodoResponse } from './proto/randomPackage/TodoResponse';
+import { TodoRequest } from './proto/randomPackage/TodoRequest';
+import { ChatRequest } from './proto/randomPackage/ChatRequest';
+import { ChatResponse } from './proto/randomPackage/ChatResponse';
 
 const PROTO_FILE = './proto/random.proto';
 
@@ -27,6 +30,8 @@ function main () {
 }
 
 const todoList: TodoResponse = { todos: [] }; // Initialize an empty todo list
+const callObjByUsername = new Map<string, grpc.ServerDuplexStream<ChatRequest, ChatResponse>>(); // Store call objects by username
+
 function getServer () {
     const server = new grpc.Server();
     server.addService(randomPackage.Random.service, {
@@ -53,7 +58,7 @@ function getServer () {
             }, 1000); // send every 1 second
         },
         TodoList: (call, callback) => {
-            call.on("data", (chunk) => {
+            call.on("data", (chunk: TodoRequest) => {
                 todoList.todos?.push(chunk); // Store the todo item
                 console.log(`Received todo: ${chunk.todo}, status: ${chunk.status}`);
             })
@@ -62,7 +67,48 @@ function getServer () {
                 console.log("Todo list stream ended");
                 callback(null, { todos: todoList.todos }); // Respond with the todo list
             });
+        },
+
+        ChatApp: (call) => {
+            call.on('data', (req) => {
+                const username = call.metadata.get('username')[0] as string; // Get the username from metadata
+                const msg = req.message; // Get the message from the request
+                console.log(username, req.message);
+
+                console.log(`${username}: ${msg}`);
+                for (let [user, userCall] of callObjByUsername) {
+                    if (user !== username) {
+                        userCall.write({ 
+                            username: username,
+                            message: msg
+                        }); // Broadcast the message to other users
+                    }
+                }
+                
+                if(callObjByUsername.get(username) === undefined) {
+                    callObjByUsername.set(username, call); // Store the call object for the user
+                }
+            })
+
+            call.on('end', () => {
+                const username = call.metadata.get('username')[0] as string; // Get the username from metadata
+                callObjByUsername.delete(username); // Remove the user from the call object map
+                for (let [user, userCall] of callObjByUsername) {
+                    userCall.write({ 
+                        username: username,
+                        message: "Has left the chat."
+                    }); // Broadcast the message to other users
+                }
+                console.log(`${username} has left the chat.`);
+                call.write({
+                    username: 'Server',
+                    message: `${username} has left the chat.`
+                }); // Notify other users that the user has left the chat
+                call.end(); // End the call
+
+            });
         }
+
   
     } as RandomHandlers); // Use the generated handlers)
 

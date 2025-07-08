@@ -2,6 +2,8 @@ import path from 'path';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import {ProtoGrpcType} from './proto/random'
+import readline from 'readline';
+
 
 const PROTO_FILE = './proto/random.proto';
 
@@ -42,20 +44,54 @@ function onClientReady() {
     //     console.log('Stream ended');
     // });
 
-    const stream = client.TodoList((err, result) => {
-        if (err) {
-            console.error(`Error receiving todo list: ${err.message}`);
-            return;
-        }
-        if (result) {
-            console.log('Received todo list:', result.todos);
-        } else {
-            console.error('No result received for todo list.');
+    // const stream = client.TodoList((err, result) => {
+    //     if (err) {
+    //         console.error(`Error receiving todo list: ${err.message}`);
+    //         return;
+    //     }
+    //     if (result) {
+    //         console.log('Received todo list:', result.todos);
+    //     } else {
+    //         console.error('No result received for todo list.');
+    //     }
+    // })
+    // stream.write({ todo: 'Learn gRPC', status: 'not done' });
+    // stream.write({ todo: 'Implement client', status: 'not done' });
+    // stream.write({ todo: 'Touch some grass.', status: 'not done' });
+    // stream.write({ todo: 'Test client', status: 'done' });
+    // stream.end(); // End the stream to signal completion
+
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    
+    const username = process.argv[2];
+    if (!username) console.error('Username is required'), process.exit();
+    
+    const metadata = new grpc.Metadata();
+    metadata.set('username', username); // Set metadata with username
+    const call = client.chatApp(metadata);
+
+    call.write({
+        message: 'register',
+    })
+    
+    call.on('data', (chunk) => {
+        console.log(`${chunk.username}: ${chunk.message}`);
+    })
+
+    rl.on('line', (line) => {
+        if (line === "quit") {
+            call.end();
+        }else {
+            call.write({
+                message: line,
+            })
         }
     })
-    stream.write({ todo: 'Learn gRPC', status: 'not done' });
-    stream.write({ todo: 'Implement client', status: 'not done' });
-    stream.write({ todo: 'Touch some grass.', status: 'not done' });
-    stream.write({ todo: 'Test client', status: 'done' });
-    stream.end(); // End the stream to signal completion
+
+    
+    
+             
 }
