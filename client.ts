@@ -34,11 +34,28 @@ function onClientReady() {
     //     console.log('Response from server:', response);
     // });
 
-    const stream = client.RandomNumbers({ maxVal: 85 })
-    stream.on('data', (chunk) => {
-        console.log('Received random number:', chunk.num);
-    });
-    stream.on('end', () => {
-        console.log('Stream ended');
-    });
+    // const stream = client.RandomNumbers({ maxVal: 85 })
+    // stream.on('data', (chunk) => {
+    //     console.log('Received random number:', chunk.num);
+    // });
+    // stream.on('end', () => {
+    //     console.log('Stream ended');
+    // });
+
+    const stream = client.TodoList((err, result) => {
+        if (err) {
+            console.error(`Error receiving todo list: ${err.message}`);
+            return;
+        }
+        if (result) {
+            console.log('Received todo list:', result.todos);
+        } else {
+            console.error('No result received for todo list.');
+        }
+    })
+    stream.write({ todo: 'Learn gRPC', status: 'not done' });
+    stream.write({ todo: 'Implement client', status: 'not done' });
+    stream.write({ todo: 'Touch some grass.', status: 'not done' });
+    stream.write({ todo: 'Test client', status: 'done' });
+    stream.end(); // End the stream to signal completion
 }

@@ -3,6 +3,7 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import {ProtoGrpcType} from './proto/random'
 import {RandomHandlers} from './proto/randomPackage/Random'; // Import the generated types
+import { TodoResponse } from './proto/randomPackage/TodoResponse';
 
 const PROTO_FILE = './proto/random.proto';
 
@@ -25,6 +26,7 @@ function main () {
     })
 }
 
+const todoList: TodoResponse = { todos: [] }; // Initialize an empty todo list
 function getServer () {
     const server = new grpc.Server();
     server.addService(randomPackage.Random.service, {
@@ -49,8 +51,18 @@ function getServer () {
                 call.write({ num: Math.floor(Math.random() * maxVal) });
                 sent++;
             }, 1000); // send every 1 second
+        },
+        TodoList: (call, callback) => {
+            call.on("data", (chunk) => {
+                todoList.todos?.push(chunk); // Store the todo item
+                console.log(`Received todo: ${chunk.todo}, status: ${chunk.status}`);
+            })
+
+            call.on("end", () => {
+                console.log("Todo list stream ended");
+                callback(null, { todos: todoList.todos }); // Respond with the todo list
+            });
         }
- 
   
     } as RandomHandlers); // Use the generated handlers)
 
