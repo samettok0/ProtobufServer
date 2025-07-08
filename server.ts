@@ -31,7 +31,27 @@ function getServer () {
         PingPong: (req, res) => {
             console.log(req.request); // Log the request
             res(null, { message: "PONG!" }); // Respond with a Pong message
+        }, 
+        RandomNumbers: (call) => {
+            const { maxVal } = call.request; // Extract maxVal from the request
+            if (typeof maxVal !== 'number' || isNaN(maxVal) || maxVal <= 0) {
+                call.emit('error', new Error('maxVal is required and must be a positive number'));
+                call.end();
+                return;
+            }
+            let sent = 0;
+            const interval = setInterval(() => {
+                if (sent >= 10) {
+                    clearInterval(interval);
+                    call.end();
+                    return;
+                }
+                call.write({ num: Math.floor(Math.random() * maxVal) });
+                sent++;
+            }, 1000); // send every 1 second
         }
+ 
+  
     } as RandomHandlers); // Use the generated handlers)
 
     return server;

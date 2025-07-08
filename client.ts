@@ -25,12 +25,20 @@ client.waitForReady(deadline, (err) => {
 })
 
 function onClientReady() {
-    console.log('Client is ready to make requests');
-    client.PingPong({ message: 'PING!' }, (err, response) => {
-        if (err) {
-            console.error(`Error calling PingPong: ${err.message}`);
-            return;
-        }
-        console.log('Response from server:', response);
+    // console.log('Client is ready to make requests');
+    // client.PingPong({ message: 'PING!' }, (err, response) => {
+    //     if (err) {
+    //         console.error(`Error calling PingPong: ${err.message}`);
+    //         return;
+    //     }
+    //     console.log('Response from server:', response);
+    // });
+
+    const stream = client.RandomNumbers({ maxVal: 85 })
+    stream.on('data', (chunk) => {
+        console.log('Received random number:', chunk.num);
+    });
+    stream.on('end', () => {
+        console.log('Stream ended');
     });
 }
